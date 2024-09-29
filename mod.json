@@ -1,0 +1,38 @@
+{
+	"geode": "3.7.1",
+	"gd": {
+		"win": "2.206",
+		"android": "2.206",
+		"mac": "2.206",
+		"ios": "2.206"
+	},
+	"id": "sorkopiko.axiom",
+	"name": "Axiom",
+	"version": "v1.0.0",
+	"developer": "SorkoPiko",
+	"description": "Level bruteforce pathfinder",
+	"links": {
+		"source": "https://github.com/SorkoPiko/Axiom",
+		"community": "https://discord.gg/8uPFxhxBX9"
+	},
+	"tags": [
+		"gameplay",
+		"editor",
+		"offline",
+		"online",
+		"interface",
+		"utility",
+		"performance",
+		"customization",
+		"content",
+		"developer",
+		"cheats"
+	],
+	"dependencies": [
+		{
+			"id": "geode.node-ids",
+			"version": ">=v1.13.2",
+			"importance": "required"
+		}
+	]
+}
