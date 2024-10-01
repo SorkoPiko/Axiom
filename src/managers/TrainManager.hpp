@@ -1,17 +1,35 @@
 #ifndef TRAINMANAGER_HPP
 #define TRAINMANAGER_HPP
 
-class TrainManager {
-    std::unordered_map<int, std::string> m_instances;
+#include <unordered_map>
+#include <vector>
+#include <utility>
 
-    void addInstance(int p1, int p2);
+#include "Pathfinder.hpp"
+
+class TrainManager {
+    static TrainManager* instance;
+
+    std::vector<PlayLayer*> instances;
+    long long timewarp;
+    GJGameLevel* level;
+    Pathfinder* pathfinder;
+
+    PlayLayer* addInstance();
+
+    TrainManager(
+        const long long timewarp,
+        GJGameLevel* level
+    ) : timewarp(timewarp), level(level) {}
 
 public:
-    void assignTask(const std::vector<bool>& instructions, std::function<void(bool, size_t)> callback);
+    static void assignTask(const std::vector<std::vector<bool>>& instructions, std::function<void(std::vector<std::pair<bool, size_t>>)> callback);
 
-    static TrainManager* create() {
-        return new TrainManager();
-    }
+    bool checkInstance(const PlayLayer *instance) const;
+    [[nodiscard]] long long getTimewarp() const;
+
+    static TrainManager* create(GJGameLevel* level);
+    static TrainManager* get();
 };
 
 #endif

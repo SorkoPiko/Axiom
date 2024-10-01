@@ -2,7 +2,7 @@
 
 using namespace geode::prelude;
 
-class $modify(GJBaseGameLayer) {
+class $modify(AGJBaseGameLayer, GJBaseGameLayer) {
     void processCommands(float dt) {
         GJBaseGameLayer::processCommands(dt);
     }
