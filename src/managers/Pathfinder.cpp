@@ -84,7 +84,7 @@ std::vector<bool> Pathfinder::findSuccessfulPath() {
     std::promise<std::vector<std::pair<bool, size_t>>> resultsPromise;
     std::future<std::vector<std::pair<bool, size_t>>> resultsFuture = resultsPromise.get_future();
 
-    trainManager->assignTask(paths, [&resultsPromise](std::vector<std::pair<bool, size_t>> results) {
+    trainManager->assignTasks(paths, [&resultsPromise](std::vector<std::pair<bool, size_t>> results) {
         resultsPromise.set_value(std::move(results));
     });
 

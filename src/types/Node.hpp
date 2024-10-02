@@ -7,7 +7,7 @@ struct Node {
     std::unique_ptr<Node> left;
     std::unique_ptr<Node> right;
 
-    Node(bool input) : input(input), success(false), left(nullptr), right(nullptr) {}
+    explicit Node(const bool input) : input(input), success(false), left(nullptr), right(nullptr) {}
 };
 
 #endif
