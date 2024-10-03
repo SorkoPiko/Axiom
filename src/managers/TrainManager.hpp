@@ -16,6 +16,7 @@ class TrainManager {
     Pathfinder* pathfinder = nullptr;
     bool ready = false;
     std::vector<TrainLayer*> deadInstances;
+    bool quitting = false;
 
     TrainLayer* addInstance();
 
@@ -25,12 +26,14 @@ class TrainManager {
     ) : timewarp(timewarp), level(level) {}
 
 public:
-    static void assignTasks(const std::vector<std::vector<bool>>& instructions, std::function<void(std::vector<std::pair<bool, size_t>>)> callback);
+    void assignTasks(const std::vector<std::vector<bool>>& instructions, std::function<void(std::vector<std::pair<bool, size_t>>)> callback);
 
     TrainLayer* getInstance(const PlayLayer* instance) const;
     [[nodiscard]] long long getTimewarp() const;
     void onDeath(TrainLayer* instance);
-    bool readyForNextAttempt() const;
+    [[nodiscard]] bool readyForNextAttempt() const;
+    void onQuit();
+    [[nodiscard]] bool isQuitting() const;
 
     static TrainManager* create(GJGameLevel* level);
     static TrainManager* get();

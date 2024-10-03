@@ -5,6 +5,9 @@
 #include <vector>
 #include "../types/Node.hpp"
 
+using BinaryInstructions = std::vector<bool>;
+using NodePath = std::vector<Node*>;
+
 class TrainManager;
 
 class Pathfinder {
@@ -12,9 +15,15 @@ class Pathfinder {
     TrainManager* trainManager;
     size_t n;
 
-    void generatePaths(const Node* node, std::vector<bool>& currentPath, std::vector<std::vector<bool>>& paths, size_t depth);
-    static bool explorePaths(Node* node, const std::vector<std::vector<bool>>& paths, const std::vector<std::pair<bool, size_t>>& results);
-    static std::vector<bool> findSuccessfulPathFromNode(Node* node);
+    static void nodeFailed(std::vector<Node *> &nodes);
+    static void checkChildNodes(std::vector<Node *> &nodes);
+
+    void generatePaths(Node* node, BinaryInstructions &currentPath, std::vector<BinaryInstructions> &paths, size_t depth);
+    static NodePath findNodeBranch(Node *root, const Node *target);
+    static std::pair<std::vector<Node *>, bool> analyseResults(Node *rootNode, const std::vector<BinaryInstructions > &paths, const std::vector<std::pair<bool, size_t> > &results);
+    static NodePath findNodesFromInstructions(Node *currentNode, const BinaryInstructions &instructions, NodePath &nodes);
+    static Node* generatePathsDown(Node* node, bool input, size_t remaining);
+    static BinaryInstructions findSuccessfulPathFromNode(Node* node);
 
 public:
     Pathfinder(
@@ -22,7 +31,9 @@ public:
         const size_t depth
     ) : root(std::make_unique<Node>(false)), trainManager(trainManager), n(depth) {}
 
-    std::vector<bool> findSuccessfulPath();
+    BinaryInstructions findSuccessfulPath();
+
+    void test();
 };
 
 #endif

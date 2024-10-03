@@ -72,12 +72,28 @@ bool TrainManager::readyForNextAttempt() const {
     return deadInstances.size() == instances.size();
 }
 
+void TrainManager::onQuit() {
+    quitting = true;
+    for (auto& i : instances) {
+        i->playLayer->onQuit();
+    }
+
+    //save and stuff ig
+
+    delete pathfinder;
+}
+
+bool TrainManager::isQuitting() const {
+    return quitting;
+}
+
 TrainManager *TrainManager::create(GJGameLevel* level) {
     instance = new TrainManager(Mod::get()->getSettingValue<int64_t>("timewarp"), level);
 
     const auto n = Mod::get()->getSettingValue<int64_t>("n");
 
     instance->pathfinder = new Pathfinder(instance, static_cast<size_t>(n));
+    //instance->pathfinder->test();
 
     const auto instances = 1 << n;
     const auto [rows, cols] = closestFactors(instances);
