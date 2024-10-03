@@ -26,7 +26,7 @@ class TrainManager {
     ) : timewarp(timewarp), level(level) {}
 
 public:
-    void assignTasks(const std::vector<std::vector<bool>>& instructions, std::function<void(std::vector<std::pair<bool, size_t>>)> callback);
+    void assignTasks(const std::vector<std::vector<bool>>& instructions, const std::function<void(std::vector<std::pair<bool, size_t>>)>& callback);
 
     TrainLayer* getInstance(const PlayLayer* instance) const;
     [[nodiscard]] long long getTimewarp() const;

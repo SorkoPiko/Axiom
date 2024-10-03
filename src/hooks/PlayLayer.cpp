@@ -5,82 +5,82 @@
 using namespace geode::prelude;
 
 constexpr std::array removal = {
-     22,
-     23,
-     24,
-     25,
-     26,
-     27,
-     28,
-     29,
-     30,
-     32,
-     33,
-     55,
-     56,
-     57,
-     58,
-     59,
-     104,
-     105,
-     221,
-     717,
-     718,
-     743,
-     744,
-     899,
-     900,
-     915,
-     1006,
-     1007,
-     1520,
-     1586,
-     1615,
-     1818,
-     1819,
-     1915,
-     1934,
-     2016,
-     2065,
-     2903,
-     2904,
-     2905,
-     2907,
-     2909,
-     2910,
-     2911,
-     2912,
-     2913,
-     2914,
-     2915,
-     2916,
-     2917,
-     2919,
-     2920,
-     2921,
-     2922,
-     2923,
-     2924,
-     2999,
-     3009,
-     3010,
-     3014,
-     3015,
-     3017,
-     3018,
-     3019,
-     3020,
-     3021,
-     3023,
-     3029,
-     3030,
-     3031,
-     3602,
-     3603,
-     3605,
-     3606,
-     3608,
-     3612,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    32,
+    33,
+    55,
+    56,
+    57,
+    58,
+    59,
+    104,
+    105,
+    221,
+    717,
+    718,
+    743,
+    744,
+    899,
+    900,
+    915,
+    1006,
+    1007,
+    1520,
+    1586,
+    1615,
+    1818,
+    1819,
+    1915,
+    1934,
+    2016,
+    2065,
+    2903,
+    2904,
+    2905,
+    2907,
+    2909,
+    2910,
+    2911,
+    2912,
+    2913,
+    2914,
+    2915,
+    2916,
+    2917,
+    2919,
+    2920,
+    2921,
+    2922,
+    2923,
+    2924,
+    2999,
+    3009,
+    3010,
+    3014,
+    3015,
+    3017,
+    3018,
+    3019,
+    3020,
+    3021,
+    3023,
+    3029,
+    3030,
+    3031,
+    3602,
+    3603,
+    3605,
+    3606,
+    3608,
+    3612,
     3642
 };
 
@@ -101,6 +101,7 @@ class $modify(APlayLayer, PlayLayer) {
     }
 
     // Thanks iAndy_HD3 for this snippet
+    // https://discord.com/channels/911701438269386882/911702535373475870/1291313907222450176 (Geode SDK Discord)
     static gd::vector<short> getGroupIDs(const GameObject* obj) {
         gd::vector<short> res;
 
@@ -114,6 +115,7 @@ class $modify(APlayLayer, PlayLayer) {
         if (!checkTrainLayer()) return PlayLayer::addObject(obj);
 
         // Thanks TheSillyDoggo for helping me get this to work
+        // https://discord.com/channels/911701438269386882/911702535373475870/1291278375553466420 (Geode SDK Discord)
 
         bool cancelAddition = false;
 
@@ -164,13 +166,10 @@ class $modify(APlayLayer, PlayLayer) {
         }
     }
 
-    // Taken directly from Eclipse Menu, all credit goes to the original author
-    // https://github.com/EclipseMenu/EclipseMenu/blob/3e48c28951e7fae567e418e242b3b67df8869f04/src/hacks/Bypass/CheckpointLimit.cpp#L26
-    void storeCheckpoint(CheckpointObject* checkpointObject) {
-        if (!checkTrainLayer()) return PlayLayer::storeCheckpoint(checkpointObject);
+    void removeCheckpoint(const bool overflow) {
+        if (!checkTrainLayer()) return PlayLayer::removeCheckpoint(overflow);
 
-        m_checkpointArray->addObject(checkpointObject);
-        PlayLayer::addToSection(checkpointObject->m_physicalCheckpointObject);
+        if (!overflow) return PlayLayer::removeCheckpoint(overflow);
     }
 
     void onQuit() {

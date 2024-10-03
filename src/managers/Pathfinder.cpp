@@ -12,12 +12,28 @@
 
 using namespace geode::prelude;
 
-void Pathfinder::nodeFailed(std::vector<Node *> &nodes) {
-    nodes.back()->status = Failure;
-    nodes.back()->left = nullptr;
-    nodes.back()->right = nullptr;
+void Pathfinder::nodeFailed(std::vector<Node*>& nodes) {
+    std::erase_if(nodes, [](const Node* node) {
+        return node == nullptr;
+    });
+
+    if (nodes.empty()) {
+        return;
+    }
+
+    Node* lastNode = nodes.back();
+    if (lastNode == nullptr) {
+        return;
+    }
+
+    lastNode->status = Failure;
+    lastNode->left = nullptr;
+    lastNode->right = nullptr;
     nodes.pop_back();
-    checkChildNodes(nodes);
+
+    if (!nodes.empty()) {
+        checkChildNodes(nodes);
+    }
 }
 
 void Pathfinder::checkChildNodes(std::vector<Node*>& nodes) {
@@ -268,6 +284,8 @@ std::vector<bool> Pathfinder::findSuccessfulPath() {
     std::vector<bool> currentPath;
     generatePaths(root.get(), currentPath, paths, 0);
 
+    log::info("Generated paths");
+
     std::promise<std::vector<std::pair<bool, size_t>>> resultsPromise;
     auto resultsFuture = resultsPromise.get_future();
 
@@ -275,20 +293,22 @@ std::vector<bool> Pathfinder::findSuccessfulPath() {
         resultsPromise.set_value(std::move(results));
     });
 
+    log::info("Got results");
+
     const std::vector<std::pair<bool, size_t>> results = resultsFuture.get();
 
-    // if (analyseResults(root.get(), paths, results)) {
-    //     return findSuccessfulPathFromNode(root.get());
-    // }
+    const auto [path, completion] = analyseResults(root.get(), paths, results);
+
+    log::info("Analysed results");
+
+    for (const auto& node : path) {
+        log::info("Node: {}", node->input);
+    }
+    log::info("Completion: {}", completion);
+
     return {}; // Return empty path if no successful path found
 }
 
 void Pathfinder::test() {
-    std::vector<std::vector<bool>> paths;
-    std::vector<bool> currentPath;
-    log::info("n {}", n);
-    generatePaths(root.get(), currentPath, paths, 0);
-    for (const auto& path : paths) {
-        log::info("{}", path);
-    }
+    findSuccessfulPath();
 }

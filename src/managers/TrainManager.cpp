@@ -18,11 +18,20 @@ TrainLayer* TrainManager::addInstance() {
     return layer;
 }
 
-void TrainManager::assignTasks(const std::vector<std::vector<bool>>& instructions, std::function<void(std::vector<std::pair<bool, size_t>>)> callback) {
+void TrainManager::assignTasks(const std::vector<std::vector<bool>>& instructions, const std::function<void(std::vector<std::pair<bool, size_t>>)>& callback) {
     std::vector<std::pair<bool, size_t>> results;
-    for (const auto& instruction : instructions) {
-        bool success = true; // Placeholder
-        size_t failIndex = 0; // Placeholder
+    constexpr std::array predefinedInstructions = {false, true, true, false, true};
+    for (auto instruction : instructions) {
+        auto success = true;
+        size_t failIndex = -1;
+        for (size_t i = 0; i < instruction.size(); i++) {
+            if (instruction[i] != predefinedInstructions[i]) {
+                if (predefinedInstructions[i] == predefinedInstructions.back()) success = true;
+                else success = false;
+                failIndex = i;
+                break;
+            }
+        }
         results.emplace_back(success, failIndex);
     }
     callback(results);
@@ -93,7 +102,7 @@ TrainManager *TrainManager::create(GJGameLevel* level) {
     const auto n = Mod::get()->getSettingValue<int64_t>("n");
 
     instance->pathfinder = new Pathfinder(instance, static_cast<size_t>(n));
-    //instance->pathfinder->test();
+    instance->pathfinder->test();
 
     const auto instances = 1 << n;
     const auto [rows, cols] = closestFactors(instances);
