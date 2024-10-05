@@ -2,8 +2,6 @@
 
 #include "../layers/Grid.hpp"
 
-using namespace geode::prelude;
-
 TrainManager* TrainManager::instance = nullptr;
 
 TrainLayer* TrainManager::addInstance() {
@@ -18,21 +16,32 @@ TrainLayer* TrainManager::addInstance() {
     return layer;
 }
 
-void TrainManager::assignTasks(const std::vector<std::vector<bool>>& instructions, const std::function<void(std::vector<std::pair<bool, size_t>>)>& callback) {
-    std::vector<std::pair<bool, size_t>> results;
+void TrainManager::assignTasks(const std::vector<NodeBranch>& instructions, const std::function<void(std::vector<InstanceResult>)>& callback) {
+    std::vector<InstanceResult> results;
     constexpr std::array predefinedInstructions = {false, true, true, false, true};
     for (auto instruction : instructions) {
-        auto success = true;
-        size_t failIndex = -1;
-        for (size_t i = 0; i < instruction.size(); i++) {
-            if (instruction[i] != predefinedInstructions[i]) {
-                if (predefinedInstructions[i] == predefinedInstructions.back()) success = true;
-                else success = false;
-                failIndex = i;
+        if (instruction.empty()) continue;
+        auto status = Dead;
+        size_t index = 0;
+        bool afterInstructions = false;
+        bool action = instruction.front()->input;
+        for (size_t i = 0; i < predefinedInstructions.size(); i++) {
+            index = i;
+            if (i < instruction.size()) action = instruction[i]->input;
+            else afterInstructions = true;
+            if (action != predefinedInstructions[i]) {
+                if (afterInstructions) status = DeadAfterInstructions;
+                break;
+            }
+            if (i == predefinedInstructions.size() - 1) {
+                if (afterInstructions) status = DeadAfterInstructions;
+                else status = Completed;
                 break;
             }
         }
-        results.emplace_back(success, failIndex);
+        auto result = InstanceResult(status, index, instruction);
+        result.action = action;
+        results.emplace_back(result);
     }
     callback(results);
 }
@@ -87,6 +96,11 @@ void TrainManager::onQuit() {
         i->playLayer->onQuit();
     }
 
+    if (cbfMod != nullptr && cbf) {
+        cbfMod->setSettingValue("soft-toggle", false);
+        log::info("Re-enabled CBF");
+    }
+
     //save and stuff ig
 
     delete pathfinder;
@@ -103,6 +117,11 @@ TrainManager *TrainManager::create(GJGameLevel* level) {
 
     instance->pathfinder = new Pathfinder(instance, static_cast<size_t>(n));
     instance->pathfinder->test();
+
+    if (instance->cbfMod = Loader::get()->getLoadedMod("syzzi.click_between_frames"); instance->cbfMod != nullptr) if (instance->cbf = !instance->cbfMod->getSettingValue<bool>("soft-toggle"); instance->cbf) {
+        instance->cbfMod->setSettingValue("soft-toggle", true);
+        log::info("Disabled CBF");
+    }
 
     const auto instances = 1 << n;
     const auto [rows, cols] = closestFactors(instances);

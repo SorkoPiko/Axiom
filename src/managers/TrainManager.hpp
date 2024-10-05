@@ -2,10 +2,12 @@
 #define TRAINMANAGER_HPP
 
 #include <vector>
-#include <utility>
 
 #include "Pathfinder.hpp"
 #include "../types/TrainLayer.hpp"
+#include "../types/InstanceResult.hpp"
+
+using namespace geode::prelude;
 
 class TrainManager {
     static TrainManager* instance;
@@ -17,6 +19,8 @@ class TrainManager {
     bool ready = false;
     std::vector<TrainLayer*> deadInstances;
     bool quitting = false;
+    bool cbf = false;
+    Mod* cbfMod = nullptr;
 
     TrainLayer* addInstance();
 
@@ -26,7 +30,7 @@ class TrainManager {
     ) : timewarp(timewarp), level(level) {}
 
 public:
-    void assignTasks(const std::vector<std::vector<bool>>& instructions, const std::function<void(std::vector<std::pair<bool, size_t>>)>& callback);
+    void assignTasks(const std::vector<NodeBranch> &instructions, const std::function<void(std::vector<InstanceResult>)> &callback);
 
     TrainLayer* getInstance(const PlayLayer* instance) const;
     [[nodiscard]] long long getTimewarp() const;

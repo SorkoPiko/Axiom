@@ -3,9 +3,9 @@
 
 enum NodeStatus {
     Unvisited,
-    Success,
-    Failure,
-    Completion
+    Success, // Didn't die
+    Failure, // Died
+    Completion // Finished the level
 };
 
 struct Node {
@@ -16,5 +16,7 @@ struct Node {
 
     explicit Node(const bool input) : input(input), status(Unvisited), left(nullptr), right(nullptr) {}
 };
+
+using NodeBranch = std::vector<Node*>;
 
 #endif

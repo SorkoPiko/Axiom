@@ -35,6 +35,8 @@ constexpr std::array removal = {
     1007,
     1520,
     1586,
+    1612,
+    1613,
     1615,
     1818,
     1819,
@@ -173,10 +175,14 @@ class $modify(APlayLayer, PlayLayer) {
     }
 
     void onQuit() {
-        return PlayLayer::onQuit();
-
         if (!checkTrainLayer()) return PlayLayer::onQuit();
-        if (m_fields->trainManager->isQuitting()) return PlayLayer::onQuit();
+
+        if (m_fields->trainManager->isQuitting()) {
+            PlayLayer::onQuit();
+            log::info("quitting");
+            m_uiLayer->removeFromParentAndCleanup(true);
+            return;
+        }
 
         m_fields->trainManager->onQuit();
     }
