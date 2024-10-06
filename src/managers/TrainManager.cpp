@@ -19,7 +19,7 @@ TrainLayer* TrainManager::addInstance() {
 void TrainManager::assignTasks(const std::vector<NodeBranch>& instructions, const std::function<void(std::vector<InstanceResult>)>& callback) {
     std::vector<InstanceResult> results;
     constexpr std::array predefinedInstructions = {false, true, true, false, true};
-    for (auto instruction : instructions) {
+    for (auto &instruction : instructions) {
         if (instruction.empty()) continue;
         auto status = Dead;
         size_t index = 0;
@@ -39,9 +39,8 @@ void TrainManager::assignTasks(const std::vector<NodeBranch>& instructions, cons
                 break;
             }
         }
-        auto result = InstanceResult(status, index, instruction);
-        result.action = action;
-        results.emplace_back(result);
+        results.emplace_back(status, index, instruction);
+        results.back().action = action;
     }
     callback(results);
 }
@@ -115,8 +114,8 @@ TrainManager *TrainManager::create(GJGameLevel* level) {
 
     const auto n = Mod::get()->getSettingValue<int64_t>("n");
 
-    instance->pathfinder = new Pathfinder(instance, static_cast<size_t>(n));
-    instance->pathfinder->test();
+    instance->pathfinder = new Pathfinder(static_cast<size_t>(n), instance);
+    instance->pathfinder->startSearch();
 
     if (instance->cbfMod = Loader::get()->getLoadedMod("syzzi.click_between_frames"); instance->cbfMod != nullptr) if (instance->cbf = !instance->cbfMod->getSettingValue<bool>("soft-toggle"); instance->cbf) {
         instance->cbfMod->setSettingValue("soft-toggle", true);

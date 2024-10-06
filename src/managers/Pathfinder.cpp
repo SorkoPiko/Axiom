@@ -1,4 +1,7 @@
+#include <future>
+
 #include "Pathfinder.hpp"
+#include "TrainManager.hpp"
 
 bool Pathfinder::findBranch(Node* rootNode, Node* target, NodeBranch& path, NodeBranch& branch) {
     if (!rootNode) return false;
@@ -71,53 +74,74 @@ void Pathfinder::setBranchSuccess(const NodeBranch& nodes, const bool completion
     }
 }
 
-NodeBranch& Pathfinder::analyseResults(const std::vector<InstanceResult> &results) {
+std::pair<NodeBranch&, InstanceResult&> Pathfinder::analyseResults(std::vector<InstanceResult>& results) {
     std::vector<NodeBranch*> branches;
     bool completion = false;
-    for (const auto& result : results) {
+    for (auto& result : results) {
         if (result.status == DeadAfterInstructions || result.status == CompletedAfterInstructions) {
-            const auto remaining = result.index - (result.branch->size() - 1);
-            generateBranch(*result.branch, result.action, remaining);
+            const auto remaining = result.index - (result.branch.size() - 1);
+            generateBranch(result.branch, result.action, remaining);
             if (result.status == DeadAfterInstructions) {
-                markFailed(*result.branch, false, -1);
-                setBranchSuccess(*result.branch, false);
+                markFailed(result.branch, false, -1);
+                setBranchSuccess(result.branch, false);
             } else {
                 completion = true;
-                setBranchSuccess(*result.branch, true);
+                setBranchSuccess(result.branch, true);
             }
         } else if (result.status == Dead) {
-            markFailed(*result.branch, false, result.index);
-            setBranchSuccess(*result.branch, false);
+            markFailed(result.branch, false, result.index);
+            setBranchSuccess(result.branch, false);
         } else if (result.status == Completed) {
-            pruneAfterIndex(*result.branch, result.index);
+            pruneAfterIndex(result.branch, result.index);
             completion = true;
-            setBranchSuccess(*result.branch, true);
+            setBranchSuccess(result.branch, true);
         }
-        branches.push_back(result.branch.get());
+        branches.push_back(&result.branch);
     }
 
     if (completion) {
-        std::erase_if(branches, [](const Node& node) {
-            return node.status != Completed && node.status != CompletedAfterInstructions;
-        });
+        for (size_t i = 0; i < results.size(); i++) {
+            if (const auto result = results.at(i); result.status == DeadAfterInstructions || result.status == Dead) {
+                results.erase(results.begin() + i);
+                branches.erase(branches.begin() + i);
+            }
+        }
     }
 
     std::ranges::sort(branches, [](const NodeBranch* a, const NodeBranch* b) {
         return a->size() < b->size();
     });
 
-    return *branches.back();
+    return {*branches.back(), results.back()};
 }
 
-void Pathfinder::generatePaths(Node* node, std::vector<bool>& currentPath, std::vector<std::vector<bool>>& paths, const size_t depth) {
-    if (node == nullptr || depth == n) {
-        paths.push_back(currentPath);
+template<typename T>
+bool isStartOf(const std::vector<T>& start, const std::vector<T>& full) {
+    return start.size() <= full.size() &&
+           std::equal(start.begin(), start.end(), full.begin());
+}
+
+void Pathfinder::sanitiseBranch(std::vector<NodeBranch>& branch) {
+    for (size_t i = 0; i < branch.size(); i++) {
+        for (size_t j = 0; j < branch.size(); j++) {
+            if (i == j) continue;
+            if (isStartOf(branch.at(i), branch.at(j))) {
+                branch.erase(branch.begin() + i);
+                i--;
+                break;
+            }
+        }
+    }
+}
+
+void Pathfinder::generatePaths(Node* node, NodeBranch& currentBranch, std::vector<NodeBranch>& branches, const size_t depth) {
+    if (node == nullptr || depth == 0) {
+        branches.push_back(currentBranch);
         return;
     }
 
     if (node->status == Failure) {
-        currentPath.clear();
-        paths.push_back(currentPath);
+        branches.push_back(currentBranch);
         return;
     }
 
@@ -128,9 +152,47 @@ void Pathfinder::generatePaths(Node* node, std::vector<bool>& currentPath, std::
         node->right = std::make_unique<Node>(true);
     }
 
-    currentPath.push_back(false);
-    generatePaths(node->left.get(), currentPath, paths, depth + 1);
-    currentPath.back() = true;
-    generatePaths(node->right.get(), currentPath, paths, depth + 1);
-    currentPath.pop_back();
+    currentBranch.push_back(node->left.get());
+    generatePaths(node->left.get(), currentBranch, branches, depth - 1);
+    currentBranch.pop_back();
+
+    currentBranch.push_back(node->right.get());
+    generatePaths(node->right.get(), currentBranch, branches, depth - 1);
+    currentBranch.pop_back();
+}
+
+NodeBranch& Pathfinder::findPath(Node* root) {
+    std::vector<NodeBranch> branches;
+    NodeBranch currentBranch;
+    generatePaths(root, currentBranch, branches, n);
+    sanitiseBranch(branches);
+
+    std::promise<std::vector<InstanceResult>> resultsPromise;
+    auto resultsFuture = resultsPromise.get_future();
+
+    manager->assignTasks(branches, [&resultsPromise](std::vector<InstanceResult> results) {
+        resultsPromise.set_value(std::move(results));
+    });
+
+    auto rawResults = resultsFuture.get();
+
+    auto [branch, result] = analyseResults(rawResults);
+
+    if (result.status == DeadAfterInstructions || result.status == Dead) {
+        const auto rootNode = branch.at(branch.size() - 2);
+        if (rootNode->left && !rootNode->right) {
+            rootNode->right = std::make_unique<Node>(true);
+            return findPath(rootNode->right.get());
+        }
+        if (rootNode->right && !rootNode->left) {
+            rootNode->left = std::make_unique<Node>(false);
+            return findPath(rootNode->left.get());
+        }
+        std::abort(); // if it gets here we're cooked regardless
+    }
+    return branch;
+}
+
+NodeBranch& Pathfinder::startSearch() {
+    return findPath(root.get());
 }

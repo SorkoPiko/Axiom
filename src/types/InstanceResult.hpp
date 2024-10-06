@@ -15,11 +15,11 @@ enum LevelStatus {
 struct InstanceResult {
     LevelStatus status;
     size_t index;
-    std::unique_ptr<NodeBranch> branch;
+    NodeBranch branch;
     bool action = false;
 
-    explicit InstanceResult(const LevelStatus status, const size_t index, const NodeBranch& branch)
-        : status(status), index(index), branch(std::make_unique<NodeBranch>(branch)) {}
+    InstanceResult(const LevelStatus status, const size_t index, NodeBranch branch)
+        : status(status), index(index), branch(std::move(branch)) {}
 };
 
 #endif

@@ -6,22 +6,29 @@
 
 using namespace geode::prelude;
 
+class TrainManager;
+
 class Pathfinder {
-    int n;
-    std::unique_ptr<Node*> root;
+    size_t n;
+    TrainManager* manager;
+    std::unique_ptr<Node> root;
 
     static bool findBranch(Node* rootNode, Node* target, NodeBranch& path, NodeBranch& branch);
-    static void generateBranch(NodeBranch &currentBranch, bool direction, size_t depth);
-    static void markFailed(NodeBranch &nodes, bool check, int index);
-    static void pruneAfterIndex(NodeBranch &nodes, size_t index);
-    static void setBranchSuccess(const NodeBranch &nodes, bool completion);
-    static NodeBranch &analyseResults(const std::vector<InstanceResult> &results);
-
-    void generatePaths(Node *node, std::vector<bool> &currentPath, std::vector<std::vector<bool>> &paths, size_t depth);
+    static void generateBranch(NodeBranch& currentBranch, bool direction, size_t depth);
+    static void markFailed(NodeBranch& nodes, bool check, int index);
+    static void pruneAfterIndex(NodeBranch& nodes, size_t index);
+    static void setBranchSuccess(const NodeBranch& nodes, bool completion);
+    static std::pair<NodeBranch &, InstanceResult &> analyseResults(std::vector<InstanceResult> &results);
+    static void sanitiseBranch(std::vector<NodeBranch>& branch);
+    static void generatePaths(Node* node, NodeBranch& currentBranch, std::vector<NodeBranch>& branches, size_t depth);
+    NodeBranch& findPath(Node* root);
 
 public:
-    explicit Pathfinder(const int n)
-        : n(n), root(std::make_unique<Node*>(new Node(false))) {}
+    NodeBranch &startSearch();
+
+    explicit Pathfinder(const size_t n, TrainManager* manager)
+        : n(n), manager(manager), root(std::make_unique<Node>(new Node(false))) {
+    }
 };
 
 #endif
