@@ -7,9 +7,7 @@
 
 enum LevelStatus {
     Dead,
-    DeadAfterInstructions,
     Completed,
-    CompletedAfterInstructions
 };
 
 struct InstanceResult {
@@ -17,9 +15,10 @@ struct InstanceResult {
     size_t index;
     NodeBranch branch;
     bool action = false;
+    bool afterInstructions;
 
-    InstanceResult(const LevelStatus status, const size_t index, NodeBranch branch)
-        : status(status), index(index), branch(std::move(branch)) {}
+    InstanceResult(const LevelStatus status, const size_t index, NodeBranch branch, const bool afterInstructions)
+        : status(status), index(index), branch(std::move(branch)), afterInstructions() {}
 };
 
 #endif
