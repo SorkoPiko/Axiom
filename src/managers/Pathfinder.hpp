@@ -19,7 +19,7 @@ class Pathfinder {
     static void pruneAfterIndex(NodeBranch& nodes, size_t index);
     static void setBranchSuccess(const NodeBranch& nodes, bool completion);
     static std::pair<NodeBranch &, InstanceResult &> analyseResults(std::vector<InstanceResult> &results);
-    static void sanitiseBranch(std::vector<NodeBranch>& branch);
+    static void sanitiseBranches(std::vector<NodeBranch>& branches);
     static void generatePaths(Node *node, NodeBranch &currentBranch, const NodeBranch &existingBranch, std::vector<NodeBranch> &branches, const
                               size_t depth);
     NodeBranch& findPath(NodeBranch &currentBranch);

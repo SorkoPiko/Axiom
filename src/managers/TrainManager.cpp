@@ -18,11 +18,6 @@ TrainLayer* TrainManager::addInstance() {
 
 void TrainManager::assignTasks(const std::vector<NodeBranch>& instructions, const std::function<void(std::vector<InstanceResult>)>& callback) {
     std::vector<InstanceResult> results;
-    //constexpr std::array predefinedInstructions = {false, true, true, false, true};
-    constexpr std::vector<std::vector<bool>> deadEnds = {
-        {true, false, false, false},
-        {false, true, false, false},
-    };
     constexpr std::array predefinedInstructions = {true, false, true, false, true, false, true, false, true, false, true};
     for (auto &instruction : instructions) {
         if (instruction.empty()) continue;
@@ -31,18 +26,18 @@ void TrainManager::assignTasks(const std::vector<NodeBranch>& instructions, cons
         bool afterInstructions = false;
         bool action = instruction.front()->input;
 
+        // Check against predefined instructions
         for (size_t i = 0; i < predefinedInstructions.size(); i++) {
             index = i;
             if (i < instruction.size()) action = instruction[i]->input;
             else afterInstructions = true;
             if (action != predefinedInstructions[i]) break;
             if (i == predefinedInstructions.size() - 1) {
-                if (!afterInstructions) status = Completed;
+                status = Completed;
                 break;
             }
         }
-        results.emplace_back(status, index, instruction, afterInstructions);
-        results.back().action = action;
+        results.emplace_back(status, index, instruction, action, afterInstructions);
     }
     callback(results);
 }

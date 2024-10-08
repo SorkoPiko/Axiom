@@ -14,7 +14,7 @@ class $modify(APlayerObject, PlayerObject) {
 
     bool checkTrainLayer() {
         if (m_fields->isLevelEditor) return false;
-        m_fields->isLevelEditor = LevelEditorLayer::get() != nullptr;
+        m_fields->isLevelEditor = LevelEditorLayer::get();
         if (m_fields->isLevelEditor) return false;
         if (!m_fields->playLayer) {
             m_fields->playLayer = static_cast<PlayLayer*>(m_gameLayer);
@@ -25,6 +25,6 @@ class $modify(APlayerObject, PlayerObject) {
         }
         if (!m_fields->trainManager) return false;
         m_fields->trainLayer = m_fields->trainManager->getInstance(m_fields->playLayer);
-        return m_fields->trainLayer != nullptr;
+        return m_fields->trainLayer;
     }
 };

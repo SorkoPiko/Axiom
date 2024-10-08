@@ -35,8 +35,15 @@ void Pathfinder::generateBranch(NodeBranch& currentBranch, const bool direction,
 
 void Pathfinder::markFailed(NodeBranch& nodes, const bool check, const int index) {
     size_t arrayIndex;
+    log::info("{} {}", index, nodes.size());
     if (index == -1) arrayIndex = nodes.size() - 1;
     else arrayIndex = index;
+
+    if (arrayIndex >= nodes.size()) {
+        log::error("Invalid index! arrayIndex: {} is out of bounds for nodes.size(): {}", arrayIndex, nodes.size());
+        std::abort();
+    }
+
     const auto lastNode = nodes.at(arrayIndex);
     if (check) {
         if (const auto parentNode = nodes.at(arrayIndex - 1); parentNode->left && parentNode->left->status == Failure && lastNode->right && lastNode->right->status == Failure) {
@@ -81,11 +88,13 @@ std::pair<NodeBranch&, InstanceResult&> Pathfinder::analyseResults(std::vector<I
     std::vector<NodeBranch*> branches;
     bool completion = false;
     for (auto& result : results) {
-        log::info("result");
+        log::info("result {}", result.afterInstructions);
         if (result.afterInstructions) {
+            log::info("afterInstructions");
             const auto remaining = result.index - (result.branch.size() - 1);
             generateBranch(result.branch, result.action, remaining);
             if (result.status == Dead) {
+                log::info("markfailed call (afterInstructions)");
                 markFailed(result.branch, false, -1);
                 setBranchSuccess(result.branch, false);
             } else {
@@ -93,6 +102,7 @@ std::pair<NodeBranch&, InstanceResult&> Pathfinder::analyseResults(std::vector<I
                 setBranchSuccess(result.branch, true);
             }
         } else if (result.status == Dead) {
+            log::info("markfailed call");
             markFailed(result.branch, false, result.index);
             setBranchSuccess(result.branch, false);
         } else if (result.status == Completed) {
@@ -126,17 +136,42 @@ bool isStartOf(const std::vector<T>& start, const std::vector<T>& full) {
            std::equal(start.begin(), start.end(), full.begin());
 }
 
-void Pathfinder::sanitiseBranch(std::vector<NodeBranch>& branch) {
-    for (size_t i = 0; i < branch.size(); i++) {
-        for (size_t j = 0; j < branch.size(); j++) {
+void Pathfinder::sanitiseBranches(std::vector<NodeBranch>& branches) {
+    for (size_t i = 0; i < branches.size(); i++) {
+        for (size_t j = 0; j < branches.size(); j++) {
             if (i == j) continue;
-            if (isStartOf(branch.at(i), branch.at(j))) {
-                branch.erase(branch.begin() + i);
+            if (isStartOf(branches.at(i), branches.at(j))) {
+                branches.erase(branches.begin() + i);
                 i--;
                 break;
             }
         }
     }
+}
+
+NodeBranch findDeepestBranch(const NodeBranch& existingBranch) {
+    NodeBranch deepestBranch;
+    NodeBranch currentBranch = existingBranch;
+    Node* lastNode = existingBranch.back();
+
+    std::function<void(Node*, NodeBranch&, size_t)> dfs = [&](Node* node, NodeBranch& branch, const size_t depth) {
+        if (!node) return;
+        branch.push_back(node);
+
+        if ((!node->left || node->left->status == Failure) && (!node->right || node->right->status == Failure)) {
+            if (branch.size() > deepestBranch.size()) {
+                deepestBranch = branch;
+            }
+        } else {
+            if (node->left) dfs(node->left.get(), branch, depth + 1);
+            if (node->right) dfs(node->right.get(), branch, depth + 1);
+        }
+
+        branch.pop_back();
+    };
+
+    dfs(lastNode, currentBranch, 0);
+    return deepestBranch;
 }
 
 void Pathfinder::generatePaths(Node* node, NodeBranch& currentBranch, const NodeBranch& existingBranch, std::vector<NodeBranch>& branches, const size_t depth) {
@@ -178,7 +213,7 @@ NodeBranch& Pathfinder::findPath(NodeBranch& currentBranch) {
     NodeBranch oldBranch;
     log::info("generatePaths");
     generatePaths(currentBranch.back(), oldBranch, currentBranch, branches, n);
-    sanitiseBranch(branches);
+    sanitiseBranches(branches);
 
     std::promise<std::vector<InstanceResult>> resultsPromise;
     auto resultsFuture = resultsPromise.get_future();
@@ -208,13 +243,17 @@ NodeBranch& Pathfinder::findPath(NodeBranch& currentBranch) {
         const auto rootNode = currentBranch.back();
         log::info("{} {}", rootNode->left != nullptr, rootNode->right != nullptr);
         if (rootNode->left.get() == lastNode) {
-            rootNode->right = std::make_unique<Node>(true);
-            currentBranch.push_back(rootNode->right.get());
+            //rootNode->right = std::make_unique<Node>(true);
+            //currentBranch.push_back(rootNode->right.get());
+            //NodeBranch deepestBranch = findDeepestBranch(currentBranch);
+            //return findPath(deepestBranch);
             return findPath(currentBranch);
         }
         if (rootNode->right.get() == lastNode) {
-            rootNode->left = std::make_unique<Node>(false);
-            currentBranch.push_back(rootNode->left.get());
+            //rootNode->left = std::make_unique<Node>(false);
+            //currentBranch.push_back(rootNode->left.get());
+            //NodeBranch deepestBranch = findDeepestBranch(currentBranch);
+            //return findPath(deepestBranch);
             return findPath(currentBranch);
         }
         log::info("what");

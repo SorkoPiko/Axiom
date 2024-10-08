@@ -90,16 +90,20 @@ class $modify(APlayLayer, PlayLayer) {
     struct Fields {
         TrainLayer* trainLayer = nullptr;
         TrainManager* trainManager = nullptr;
+
+        bool checkedTrainManager = false;
     };
 
     bool checkTrainLayer() {
-        if (m_fields->trainLayer) return true;
-        if (!m_fields->trainManager) {
-            m_fields->trainManager = TrainManager::get();
+        const auto fields = m_fields.self();
+
+        if (fields->trainLayer) return true;
+        if (!fields->trainManager && !fields->checkedTrainManager) {
+            fields->trainManager = TrainManager::get();
         }
-        if (!m_fields->trainManager) return false;
-        m_fields->trainLayer = m_fields->trainManager->getInstance(this);
-        return m_fields->trainLayer != nullptr;
+        if (!fields->trainManager) return false;
+        fields->trainLayer = fields->trainManager->getInstance(this);
+        return fields->trainLayer;
     }
 
     // Thanks iAndy_HD3 for this snippet
@@ -150,12 +154,11 @@ class $modify(APlayLayer, PlayLayer) {
             } else {
                 PlayLayer::resetLevel();
             }
+            this->m_gameState.m_timeWarp = m_fields->trainManager->getTimewarp();
             return;
         }
 
         m_fields->trainManager->onDeath(m_fields->trainLayer);
-
-        m_gameState.m_timeWarp = m_fields->trainManager->getTimewarp();
     }
 
     void destroyPlayer(PlayerObject* player, GameObject* gameObject) {
@@ -168,22 +171,26 @@ class $modify(APlayLayer, PlayLayer) {
         }
     }
 
-    void removeCheckpoint(const bool overflow) {
-        if (!checkTrainLayer()) return PlayLayer::removeCheckpoint(overflow);
+    void storeCheckpoint(CheckpointObject* checkpointObject) {
+        if (!checkTrainLayer()) return PlayLayer::storeCheckpoint(checkpointObject);
 
-        if (!overflow) return PlayLayer::removeCheckpoint(overflow);
+        m_checkpointArray->addObject(checkpointObject);
+        PlayLayer::addToSection(checkpointObject->m_physicalCheckpointObject);
     }
 
     void onQuit() {
         if (!checkTrainLayer()) return PlayLayer::onQuit();
 
-        if (m_fields->trainManager->isQuitting()) {
+        const auto fields = m_fields.self();
+
+        if (fields->trainManager->isQuitting()) {
             PlayLayer::onQuit();
             log::info("quitting");
             m_uiLayer->removeFromParentAndCleanup(true);
             return;
         }
 
-        m_fields->trainManager->onQuit();
+        fields->trainManager->onQuit();
+        fields->trainLayer->lastAction = false;
     }
 };
