@@ -13,18 +13,20 @@ class $modify(APlayerObject, PlayerObject) {
     };
 
     bool checkTrainLayer() {
-        if (m_fields->isLevelEditor) return false;
-        m_fields->isLevelEditor = LevelEditorLayer::get();
-        if (m_fields->isLevelEditor) return false;
-        if (!m_fields->playLayer) {
-            m_fields->playLayer = static_cast<PlayLayer*>(m_gameLayer);
+        const auto fields = m_fields.self();
+
+        if (fields->isLevelEditor) return false;
+        fields->isLevelEditor = LevelEditorLayer::get();
+        if (fields->isLevelEditor) return false;
+        if (!fields->playLayer) {
+            fields->playLayer = static_cast<PlayLayer*>(m_gameLayer);
         }
-        if (m_fields->trainLayer) return true;
-        if (!m_fields->trainManager) {
-            m_fields->trainManager = TrainManager::get();
+        if (fields->trainLayer) return true;
+        if (!fields->trainManager) {
+            fields->trainManager = TrainManager::get();
         }
-        if (!m_fields->trainManager) return false;
-        m_fields->trainLayer = m_fields->trainManager->getInstance(m_fields->playLayer);
-        return m_fields->trainLayer;
+        if (!fields->trainManager) return false;
+        fields->trainLayer = fields->trainManager->getInstance(fields->playLayer);
+        return fields->trainLayer;
     }
 };

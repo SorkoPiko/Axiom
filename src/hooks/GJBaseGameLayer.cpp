@@ -9,6 +9,7 @@ class $modify(AGJBaseGameLayer, GJBaseGameLayer) {
         TrainLayer* trainLayer = nullptr;
         TrainManager* trainManager = nullptr;
         bool levelEditorLayer = false;
+        PlayLayer* playLayer = nullptr;
 
         bool checkedTrainManager = false;
         bool checkedLevelEditor = false;
@@ -31,12 +32,14 @@ class $modify(AGJBaseGameLayer, GJBaseGameLayer) {
         }
         if (!fields->trainManager) return false;
 
-        fields->trainLayer = fields->trainManager->getInstance(reinterpret_cast<PlayLayer*>(this));
+        fields->playLayer = reinterpret_cast<PlayLayer*>(this);
+        fields->trainLayer = fields->trainManager->getInstance(fields->playLayer);
         return fields->trainLayer;
     }
 
     void update(const float dt) {
         if (LevelEditorLayer::get()) return GJBaseGameLayer::update(dt);
+
         GameManager::get()->m_playLayer = reinterpret_cast<PlayLayer*>(this);
         GameManager::get()->m_gameLayer = this;
         GJBaseGameLayer::update(dt);
@@ -47,18 +50,22 @@ class $modify(AGJBaseGameLayer, GJBaseGameLayer) {
 
         const auto fields = m_fields.self();
 
-        if (m_gameState.m_currentProgress == 0) fields->trainLayer->lastAction = false;
+        const auto tick = m_gameState.m_currentProgress;
+
+        if (tick == 0) fields->trainLayer->lastAction = false;
 
         bool action = true;
         if (!fields->trainLayer->instructions.empty()) {
-            action = fields->trainLayer->instructions.at(m_gameState.m_currentProgress)->input;
+            action = fields->trainLayer->instructions.at(tick)->input;
         }
 
-        if (action != fields->trainLayer->lastAction || true) {
-            handleButton(action, 1, true);
+        if (action != fields->trainLayer->lastAction) {
+            if (action)
+                fields->playLayer->m_player1->pushButton(PlayerButton::Jump);
+            else
+                fields->playLayer->m_player1->releaseButton(PlayerButton::Jump);
+            fields->trainLayer->lastAction = action;
         }
-
-        fields->trainLayer->lastAction = action;
 
         GJBaseGameLayer::processCommands(dt);
     }

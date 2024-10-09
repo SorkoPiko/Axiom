@@ -83,6 +83,7 @@ void TrainManager::onDeath(TrainLayer* instance) {
 }
 
 bool TrainManager::readyForNextAttempt() const {
+    log::info("{}", deadInstances.size());
     return deadInstances.size() == instances.size();
 }
 
@@ -100,6 +101,7 @@ void TrainManager::onQuit() {
     //save and stuff ig
 
     delete pathfinder;
+    delete this;
 }
 
 bool TrainManager::isQuitting() const {

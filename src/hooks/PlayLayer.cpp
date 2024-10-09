@@ -100,6 +100,7 @@ class $modify(APlayLayer, PlayLayer) {
         if (fields->trainLayer) return true;
         if (!fields->trainManager && !fields->checkedTrainManager) {
             fields->trainManager = TrainManager::get();
+            fields->checkedTrainManager = true;
         }
         if (!fields->trainManager) return false;
         fields->trainLayer = fields->trainManager->getInstance(this);
@@ -146,7 +147,9 @@ class $modify(APlayLayer, PlayLayer) {
     void resetLevel() {
         if (!checkTrainLayer()) return PlayLayer::resetLevel();
 
-        if (m_fields->trainManager->readyForNextAttempt()) {
+        const auto fields = m_fields.self();
+
+        if (fields->trainManager->readyForNextAttempt()) {
             if (const auto old_playlayer = GameManager::get()->m_playLayer) {
                 GameManager::get()->m_playLayer = this;
                 PlayLayer::resetLevel();
@@ -154,11 +157,10 @@ class $modify(APlayLayer, PlayLayer) {
             } else {
                 PlayLayer::resetLevel();
             }
-            this->m_gameState.m_timeWarp = m_fields->trainManager->getTimewarp();
+            this->m_gameState.m_timeWarp = fields->trainManager->getTimewarp();
             return;
         }
-
-        m_fields->trainManager->onDeath(m_fields->trainLayer);
+        fields->trainManager->onDeath(fields->trainLayer);
     }
 
     void destroyPlayer(PlayerObject* player, GameObject* gameObject) {
@@ -191,6 +193,5 @@ class $modify(APlayLayer, PlayLayer) {
         }
 
         fields->trainManager->onQuit();
-        fields->trainLayer->lastAction = false;
     }
 };

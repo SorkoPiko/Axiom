@@ -154,7 +154,7 @@ NodeBranch findDeepestBranch(const NodeBranch& existingBranch) {
     NodeBranch currentBranch = existingBranch;
     Node* lastNode = existingBranch.back();
 
-    std::function<void(Node*, NodeBranch&, size_t)> dfs = [&](Node* node, NodeBranch& branch, const size_t depth) {
+    std::function<void(Node*, NodeBranch&)> dfs = [&](Node* node, NodeBranch& branch) {
         if (!node) return;
         branch.push_back(node);
 
@@ -163,14 +163,14 @@ NodeBranch findDeepestBranch(const NodeBranch& existingBranch) {
                 deepestBranch = branch;
             }
         } else {
-            if (node->left) dfs(node->left.get(), branch, depth + 1);
-            if (node->right) dfs(node->right.get(), branch, depth + 1);
+            if (node->left) dfs(node->left.get(), branch);
+            if (node->right) dfs(node->right.get(), branch);
         }
 
         branch.pop_back();
     };
 
-    dfs(lastNode, currentBranch, 0);
+    dfs(lastNode, currentBranch);
     return deepestBranch;
 }
 
