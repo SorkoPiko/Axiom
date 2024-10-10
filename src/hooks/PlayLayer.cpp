@@ -189,6 +189,7 @@ class $modify(APlayLayer, PlayLayer) {
             PlayLayer::onQuit();
             log::info("quitting");
             m_uiLayer->removeFromParentAndCleanup(true);
+            removeFromParentAndCleanup(true);
             return;
         }
 
